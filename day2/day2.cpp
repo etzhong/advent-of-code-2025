@@ -3,8 +3,7 @@
 #include <vector>
 
 int main() {
-    std::vector<std::pair<unsigned long long, unsigned long long>> ranges;
-    std::vector<std::pair<unsigned int, unsigned int>> rangeWidths;
+    std::vector<std::pair<std::string, std::string>> ranges;
     std::string range;
     std::ifstream ifile("input.txt");
     if (!ifile.is_open()) {
@@ -12,29 +11,34 @@ int main() {
         return 1;
     }
     while (std::getline(ifile, range, ',')) {
-        const std::string lower = range.substr(0, range.find('-'));
-        const std::string upper = range.substr(range.find('-')+1);
-        ranges.emplace_back(std::stoull(lower), std::stoull(upper));
-        rangeWidths.emplace_back(lower.size(), upper.size());
+        std::string lower = range.substr(0, range.find('-'));
+        std::string upper = range.substr(range.find('-')+1);
+        if (upper.back() == '\n') upper.pop_back();
+        ranges.emplace_back(lower, upper);
     }
     ifile.close();
-    std::vector<long long> invalidIDs;
-    for (unsigned int i=0; i<ranges.size(); i++) {
-
+    unsigned long long invalidIdSum = 0;
+    for (const auto& rp : ranges) {
+        const std::string lower = rp.first;
+        const std::string upper = rp.second;
+        unsigned long long lowerHalfIdBound, upperHalfIdBound;
+        if (lower.size() % 2 && upper.size() % 2 && lower.size() == upper.size()) continue;
+        else if(lower.size() % 2 == 0 && upper.size() % 2 == 1) {
+            lowerHalfIdBound = std::stoull(lower.substr(0, lower.size()/2));
+            upperHalfIdBound = (std::pow(10, lower.size()/2) - 1);
+        } else if (lower.size() % 2 == 1 && upper.size() % 2 == 0) {
+            lowerHalfIdBound = std::pow(10, upper.size()/2 - 1);
+            upperHalfIdBound = std::stoull(upper.substr(0, upper.size()/2));
+        } else if (lower.size() % 2 == 0 && upper.size() % 2 == 0) {
+            lowerHalfIdBound = std::stoull(lower.substr(0, lower.size()/2));
+            upperHalfIdBound = std::stoull(upper.substr(0, upper.size()/2));
+        }
+        for (unsigned long long halfId = lowerHalfIdBound; halfId <= upperHalfIdBound; halfId++) {
+            unsigned long long id = std::stoull(std::to_string(halfId) + std::to_string(halfId));
+            if (std::stoull(lower) <= id && id <= stoull(upper))
+                invalidIdSum += id;
+        }
     }
-
+    std::cout << "Invalid ID Total: " << invalidIdSum << std::endl;
     return 0;
 }
-
-/*
-func outputInvalidFromPair (a, b) {
-
-}
-
-
-Key Insights
-    (1) An invalid ID MUST have an even number of digits
-    (2) Given (1), we only need to check the "even-digit subrange" of an invalid range
-    (3)
-
-*/
