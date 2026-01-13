@@ -13,30 +13,30 @@ int main() {
     while (std::getline(ifile, range, ',')) {
         std::string lower = range.substr(0, range.find('-'));
         std::string upper = range.substr(range.find('-')+1);
-        if (upper.back() == '\n') upper.pop_back();
         ranges.emplace_back(lower, upper);
     }
     ifile.close();
     unsigned long long invalidIdSum = 0;
     for (const auto& rp : ranges) {
-        const std::string lower = rp.first;
-        const std::string upper = rp.second;
-        unsigned long long lowerHalfIdBound, upperHalfIdBound;
-        if (lower.size() % 2 && upper.size() % 2 && lower.size() == upper.size()) continue;
-        else if(lower.size() % 2 == 0 && upper.size() % 2 == 1) {
-            lowerHalfIdBound = std::stoull(lower.substr(0, lower.size()/2));
-            upperHalfIdBound = (std::pow(10, lower.size()/2) - 1);
-        } else if (lower.size() % 2 == 1 && upper.size() % 2 == 0) {
-            lowerHalfIdBound = std::pow(10, upper.size()/2 - 1);
-            upperHalfIdBound = std::stoull(upper.substr(0, upper.size()/2));
-        } else if (lower.size() % 2 == 0 && upper.size() % 2 == 0) {
-            lowerHalfIdBound = std::stoull(lower.substr(0, lower.size()/2));
-            upperHalfIdBound = std::stoull(upper.substr(0, upper.size()/2));
-        }
-        for (unsigned long long halfId = lowerHalfIdBound; halfId <= upperHalfIdBound; halfId++) {
-            unsigned long long id = std::stoull(std::to_string(halfId) + std::to_string(halfId));
-            if (std::stoull(lower) <= id && id <= stoull(upper))
-                invalidIdSum += id;
+        const unsigned long long lowerVal = std::stoull(rp.first);
+        const unsigned long long upperVal = std::stoull(rp.second);
+        const unsigned int lowerWidth = rp.first.size();
+        const unsigned int upperWidth = rp.second.size();
+        for (unsigned long long v = lowerVal; v <= upperVal; v++) {
+            const std::string vString = std::to_string(v);
+            bool isInvalid = false;
+            for (unsigned int chunkSize = 1; chunkSize <= vString.size()/2; chunkSize++) {
+                if (vString.size() % chunkSize != 0) continue;
+                unsigned int numChunks = vString.size() / chunkSize;
+                const std::string chunk = vString.substr(0, chunkSize);
+                std::string repeatChunkString; repeatChunkString.reserve(chunk.size() * numChunks);
+                for (unsigned int c=0; c<numChunks; c++)
+                    repeatChunkString += chunk;
+                if (repeatChunkString == vString)
+                    isInvalid = true;
+            }
+            if (isInvalid)
+                invalidIdSum += v;
         }
     }
     std::cout << "Invalid ID Total: " << invalidIdSum << std::endl;
