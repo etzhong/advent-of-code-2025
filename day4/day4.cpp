@@ -14,7 +14,7 @@ bool const can_access(const std::vector<std::string>& map, int row, int col) {
     if (!onRightEdge)               numAdjacentRolls += (map[row][col+1] == '@');
     if (!onBotEdge && !onLeftEdge)  numAdjacentRolls += (map[row+1][col-1] == '@');
     if (!onBotEdge)                 numAdjacentRolls += (map[row+1][col] == '@');
-    if (!onBotEdge && !onRightEdge)  numAdjacentRolls += (map[row+1][col+1] == '@');
+    if (!onBotEdge && !onRightEdge) numAdjacentRolls += (map[row+1][col+1] == '@');
     return (numAdjacentRolls < 4);
 }
 
@@ -28,11 +28,19 @@ int main() {
     }
     while (std::getline(ifile, row))
         map.emplace_back(row);
-    int numAccessibleRolls = 0;
-    for (int row=0; row<map.size(); row++)
-        for (int col=0; col<map.front().size(); col++)
-            if (map[row][col] == '@' && can_access(map, row, col))
-                numAccessibleRolls++;
-    std::cout << "Acessible Rolls: " << numAccessibleRolls << std::endl;
+    int numRemovableRolls = 0;
+    std::vector<std::pair<int, int>> toRemove;
+    do {
+        for (auto roll : toRemove)
+            map[roll.first][roll.second] = '.';
+        toRemove.clear();
+        for (int row=0; row<map.size(); row++)
+            for (int col=0; col<map.front().size(); col++)
+                if (map[row][col] == '@' && can_access(map, row, col)) {
+                    numRemovableRolls++;
+                    toRemove.emplace_back(row, col);
+                }
+    } while (!toRemove.empty());
+    std::cout << "Total Removable Rolls: " << numRemovableRolls << std::endl;
     return 0;
 }
