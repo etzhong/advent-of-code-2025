@@ -14,6 +14,7 @@ int main() {
         intervals.emplace_back(std::stoll(line.substr(0, line.find('-'))), std::stoll(line.substr(line.find('-')+1)));
     while (std::getline(ifile, line))
         ids.emplace_back(std::stoll(line));
+    ifile.close();
     int numFreshItems = 0;
     bool isFresh;
     for (auto const id : ids) {
