@@ -14,6 +14,7 @@ int main() {
     }
     while (std::getline(ifile, bank))
         batteryBanks.emplace_back(bank);
+    ifile.close();
     unsigned long long maxJoltage = 0;
     for (const auto& bank : batteryBanks) {
         joltageCellIdxs[0] = 0;

@@ -26,6 +26,7 @@ int main() {
         std::cerr << "Error opening input file" << std::endl;
         return 1;
     }
+    ifile.close();
     while (std::getline(ifile, row))
         map.emplace_back(row);
     int numRemovableRolls = 0;
