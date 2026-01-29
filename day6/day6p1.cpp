@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <ranges>
+#include <string>
+#include <vector>
 
 int main() {
     std::ifstream ifile("input.txt");
@@ -21,12 +23,12 @@ int main() {
     ifile.close();
     long long totalOpSum = 0;
     for (int col=0; col<tokens.front().size(); col++) {
-        long long currentOpSum = std::stoll(tokens.front()[col]);
+        long long currentOpTotal = std::stoll(tokens.front()[col]);
         for (int row=1; row<tokens.size()-1; row++) {
-            if (tokens.back()[col] == "+")      currentOpSum += std::stoll(tokens[row][col]);
-            else if (tokens.back()[col] == "*") currentOpSum *= std::stoll(tokens[row][col]);
+            if (tokens.back()[col] == "+")      currentOpTotal += std::stoll(tokens[row][col]);
+            else if (tokens.back()[col] == "*") currentOpTotal *= std::stoll(tokens[row][col]);
         }
-        totalOpSum += currentOpSum;
+        totalOpSum += currentOpTotal;
     }
     std::cout << "Total Operation Sum: " << totalOpSum << "\n";
     return 0;
