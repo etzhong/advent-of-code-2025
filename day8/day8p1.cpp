@@ -1,10 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <format>
 #include <vector>
 #include <queue>
 #include <unordered_set>
 #include <ranges>
+#include <algorithm>
 #include <cmath>
 
 // Struct representing a 3D point for a junction box location
@@ -16,31 +18,6 @@ struct Point {
     double z;
     std::vector<Point*> connections;
 };
-
-// Compute euclidean distance between two points
-inline double compute_distance(Point const& a, Point const& b) {
-    double const dx = a.x-b.x;
-    double const dy = a.y-b.y;
-    double const dz = a.z-b.z;
-    return std::sqrt(dx*dx+dy*dy+dz*dz);
-}
-
-// Determine if two points are connected already by running BFS
-bool isConnected(Point* const a, Point* const b) {
-    std::queue<Point* const> q;
-    std::unordered_set<Point* const> explored;
-    q.emplace(&a);
-    while (!q.empty()) {
-        Point* node = q.front();
-        q.pop();
-        for (auto neighbor : node->connections) {
-            if (neighbor == b) return true;
-            //if (!explored.contains(neighbor)) q.emplace(neighbor);
-        }
-        explored.emplace(node);
-    }
-    return false;
-}
 
 // Struct representing a connection between 2 junctions and its associated distance
 struct Connection {
@@ -54,7 +31,33 @@ struct Connection {
     }
 };
 
+// Compute euclidean distance between two points
+inline double compute_distance(Point const& a, Point const& b) {
+    double const dx = a.x-b.x;
+    double const dy = a.y-b.y;
+    double const dz = a.z-b.z;
+    return std::sqrt(dx*dx+dy*dy+dz*dz);
+}
+
+// Determine if two points are connected already by running BFS
+bool isConnected(Point* const a, Point* const b) {
+    std::queue<Point*> q;
+    std::unordered_set<Point*> explored;
+    q.emplace(a);
+    while (!q.empty()) {
+        Point* const node = q.front();
+        q.pop();
+        for (auto const neighbor : node->connections) {
+            if (neighbor == b) return true;
+            if (!explored.contains(neighbor)) q.emplace(neighbor);
+        }
+        explored.emplace(node);
+    }
+    return false;
+}
+
 int main() {
+    // Open input file and parse junctions
     std::ifstream ifile("input.txt");
     if (!ifile.is_open()) {
         std::cerr << "Error opening input file" << std::endl;
@@ -71,32 +74,70 @@ int main() {
     }
     ifile.close();
 
-    std::priority_queue<Connection, std::vector<Connection>> connectionHeap;
+    // Minheap with custom comparator to sort all possible connections by shortest distance
+    auto cmp = [](Connection const& a, Connection const&b) {
+        return a.distance > b.distance;
+    };
+    std::priority_queue<Connection, std::vector<Connection>, decltype(cmp)> connectionHeap;
+
+    // Iterate through all possible pairwise connections and add to connectionHeap
     for (int junctIdx=0; junctIdx<junctions.size(); junctIdx++)
         for (int connIdx = junctIdx+1; connIdx<junctions.size(); connIdx++)
-            /*connectionHeap.emplace(
-                compute_distance(junctions[junctIdx], junctions[connIdx]),
+            connectionHeap.emplace(
                 &junctions[junctIdx],
-                &junctions[connIdx]
-            );*/
-            ;
+                &junctions[connIdx],
+                compute_distance(junctions[junctIdx], junctions[connIdx])
+            );
 
+    // Pop top 1000 shortest distance connections and connect graph
     int const NUM_CONNECTIONS = 1000;
     for (int conn=0; conn<NUM_CONNECTIONS; conn++) {
-        // Connection const shortestConnection = connectionHeap.top();
-        // connectionHeap.pop();
-        // if (isConnected(shortestConnection.a, shortestConnection.b));
+        Connection const shortestConnection = connectionHeap.top();
+        Point* const a = shortestConnection.a;
+        Point* const b = shortestConnection.b;
+        if (connectionHeap.empty()) break;
+        connectionHeap.pop();
+        if (!isConnected(shortestConnection.a, shortestConnection.b)) {
+            a->connections.emplace_back(b);
+            b->connections.emplace_back(a);
+        }
     }
 
+    // Get sizes of 3 largest circuits by running BFS on possible subgraphs
+    int largest{1}, secondLargest{1}, thirdLargest{1};
+    std::unordered_set<Point*> visited;
+    for (auto& junction : junctions) {
+        if (!visited.contains(&junction)) {
+            std::queue<Point*> q;
+            std::unordered_set<Point*> explored;
+            q.emplace(&junction);
+            int size = 0;
+            while (!q.empty()) {
+                Point* const node = q.front();
+                q.pop();
+                for (auto const neighbor : node->connections) {
+                    if (!explored.contains(neighbor))
+                        q.emplace(neighbor);
+                }
+                explored.emplace(node);
+                visited.emplace(node);
+                size++;
+            }
+            if (size >= largest) {
+                thirdLargest = secondLargest;
+                secondLargest = largest;
+                largest = size;
+            } else if (size > secondLargest) {
+                thirdLargest = secondLargest;
+                secondLargest = size;
+            } else if (size > thirdLargest) {
+                thirdLargest = size;
+            }
+        }
+    }
 
-    // Read in input. Parse into list of junctions representing graph structure
-    // Iterate through all points and push pairs into a heap
-    // for every 1000 connections
-    //      Pop the shortest connection from the heap
-    //      Run BFS on one of the points to determine if junction boxes are already in the same circuit
-    //      if connected already in circuit -> do nothing
-    //      else: create connection between two points
-    // Iterate through junction list and run BFS starting from different points. Track max size of graphs
+    // Print product of 3 largest subgraphs as final answer
+    std::cout << "Total: " << largest * secondLargest * thirdLargest << "\n";
 
     return 0;
 }
