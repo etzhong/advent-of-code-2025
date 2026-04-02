@@ -1,13 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <format>
 #include <vector>
-#include <queue>
-#include <unordered_set>
 #include <ranges>
-#include <algorithm>
-#include <cmath>
 
 // Struct representing a 2D point for a red tile location
 struct Point {
